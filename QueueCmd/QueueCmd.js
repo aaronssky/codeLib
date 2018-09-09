@@ -34,46 +34,25 @@ console.blue = (p) => {
     console.log("\033[47;34m " + p + " \033[0m")
 }
 
+class QueueCmd {
 
-function QueueCmd(options = {}) {
-    this.list = [];
-    this.options = options;
-    this.showError = Boolean(options.showError);
-}
+    constructor(options = {}) {
+        this.list = [];
+        this.options = options;
+        this.showError = Boolean(options.showError);
+    }
 
-QueueCmd.prototype = {
-    put: function (cmd = "", options = {}) {
+    put(cmd = "", options = {}) {
         let queueObj = options;
         queueObj.cmd = cmd;
         this.list.push(queueObj);
-    },
-    getCurrentBranch: function () {
-        let that = this,
-            name = "",
-            result;
-        return new Promise(async function (resolve, reject) {
-            let queueObj = {
-                cmd: "git symbolic-ref --short -q HEAD"
-            };
-            try {
-                let { error, stdout, stderr } = result = await that.exec(queueObj, false);
-                name = stdout.trim();
-                console.green(name);
-                console.green(result);
-                resolve(name);
-            } catch (err) {
-                console.red("get branch name fail");
-                reject(err);
-            }
-        });
-    },
-    // exec cmd & return Promise
-    exec: function (queueObj, showLog = true) {
-        let that = this;
+    }
+
+    exec(queueObj, showLog = true) {
         let p = new Promise((resolve, reject) => {
             showLog && console.log("\n");
             showLog && console.chunk(queueObj);
-            process.exec(queueObj["cmd"], that.options, (error, stdout, stderr) => {
+            process.exec(queueObj["cmd"], this.options, (error, stdout, stderr) => {
                 let _arguments = {
                     error,
                     stdout,
@@ -81,7 +60,7 @@ QueueCmd.prototype = {
                 };
                 if (error !== null) {
                     showLog && console.red(stderr);
-                    showLog && that.showError && console.red(error);
+                    showLog && this.showError && console.red(error);
                     if (typeof queueObj.fail == 'function') {
                         queueObj.fail({
                             error,
@@ -111,24 +90,56 @@ QueueCmd.prototype = {
             });
         });
         return p;
-    },
-    process: function () {
-        let that = this;
-        return new Promise(async function (resolve, reject) {
+    }
+
+    process() {
+        return new Promise(async (resolve, reject) => {
             try {
-                for (var i = 0; i < that.list.length; i++) {
-                    await that.exec(that.list[i]);
+                for (var i = 0; i < this.list.length; i++) {
+                    await this.exec(this.list[i]);
                 }
                 resolve("process queue success !!!");
             } catch (err) {
                 reject(err);
             }
         })
-    },
-    run: function () {
+    }
+
+    run() {
         console.log(this.list)
         return this.process();
     }
 }
 
-module.exports = QueueCmd;
+class QueueGit extends QueueCmd {
+
+    constructor(...args) {
+        super(...args);
+    }
+
+    getCurrentBranch() {
+        let name = "",
+            result;
+        return new Promise(async (resolve, reject) => {
+            let queueObj = {
+                cmd: "git symbolic-ref --short -q HEAD"
+            };
+            try {
+                let { error, stdout, stderr } = result = await this.exec(queueObj, false);
+                name = stdout.trim();
+                console.green(name);
+                console.green(result);
+                resolve(name);
+            } catch (err) {
+                console.red("get branch name fail");
+                reject(err);
+            }
+        });
+    }
+
+}
+
+module.exports = {
+    QueueCmd,
+    QueueGit
+};

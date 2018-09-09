@@ -1,14 +1,14 @@
-var QueueCmd = require('./QueueCmd');
+const {QueueCmd, QueueGit} = require('./QueueCmd');
 
 async function deployToYKZ() {
-    let p = new QueueCmd({
-        showError: 1
-        // cwd: "../ycf_qiniu/"
+    let p = new QueueGit({
+        showError: 1,
+        cwd: "../../vue-components/"
     });
     // let p = new QueueGit({cwd: ""});
     let bName = await p.getCurrentBranch();
 
-    p.put(`sudo git pull origin ${bName}`, {
+    p.put(`git pull origin ${bName}`, {
         success: function(res, resolve, reject){
             resolve(res);
         },
@@ -22,12 +22,12 @@ async function deployToYKZ() {
             console.log("finally")
         }
     });
-    // p.put("git status");
+    p.put("git status");
 
-    p.put("sudo git add .");
-    p.put("sudo git commit -am 'inport files'");
-    p.put(`sudo git pull origin ${bName}`);
-    p.put(`sudo git push origin ${bName}`);
+    // p.put("git add .");
+    // p.put("git commit -am '测试shell'");
+    // p.put('git pull origin ucloud');
+    // p.put(`git push origin ${bName}`);
 
     // p.put('git checkout master');
     // p.put('git pull origin master');
@@ -38,7 +38,6 @@ async function deployToYKZ() {
     // p.put('git pull origin ucloud');
     // p.put(`git pull origin master`);
     // p.put('git push origin ucloud');
-
 
     p.run().then(function(res) {
         console.green(res)
