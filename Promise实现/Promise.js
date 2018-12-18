@@ -2,7 +2,7 @@
  * 实现promise
  * 包括基本api实现
  * 包括异步micro task机制
- * 包括原生Promise异常warning机制(仍存在某些场景兼容问题，仅影响warning提示，不影响使用。后续修复...)
+ * 包括原生Promise异常warning机制
  * author: Aron Chen
  * qq: 398155437
  */
@@ -57,10 +57,9 @@ class promise {
                     return;
                 }
                 runRejected(error);
-            })
 
-            // 实现原生Promise异常warning机制
-            setTimeout(() => {
+                // 实现原生Promise异常warning机制
+                // setTimeout(() => {
                 if (!this._hasThen) {
                     //表示当前promise的chain链已经到达终点，reject未被接住，输出缺省提示(还原原生promise异常warning机制)
                     console.error("(模拟原生缺省warning) UnhandledPromiseRejectionWarning:", error);
@@ -72,7 +71,10 @@ class promise {
                         // ...
                     }
                 }
-            }, 0);
+                // }, 0);
+            })
+
+
         }
 
         try {
@@ -175,9 +177,9 @@ class promise {
                         _resolve(values);
                     }
                 }, err => {
-                    // 这里切入点兼容warning
                     _reject(err);
-                });
+                    return err;
+                })
             }
         });
     }
@@ -188,7 +190,6 @@ class promise {
                 this.resolve(p).then(res => {
                     _resolve(res);
                 }, err => {
-                    // 这里切入点兼容warning
                     _reject(err);
                 })
             }
@@ -225,30 +226,6 @@ class promise {
         })
     }
 }
-
-// 该情况下的warning机制与原生有差异，后续修复
-let t1 = function () {
-    let _promise = promise;
-    // _promise = Promise;
-
-    var p = new _promise((resolve, reject) => {
-        setTimeout(e => {
-            reject("111");
-        }, 2000)
-    });
-
-    var q = new _promise((resolve, reject) => {
-        setTimeout(e => {
-            reject("222");
-        }, 1000)
-    });
-
-    _promise.all([p, q])
-    // _promise.race([p, q])
-    // _promise.race([p, q]).then()
-}
-
-// t1()
 
 module.exports = promise;
 
